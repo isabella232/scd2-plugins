@@ -21,15 +21,15 @@
 
   <groupId>io.cdap.plugin</groupId>
   <artifactId>scd2-plugins</artifactId>
-  <version>1.0.0-SNAPSHOT</version>
+  <version>1.0.0</version>
 
   <properties>
     <!-- properties for script build step that creates the config files for the artifacts -->
-    <data.pipeline.parent>system:cdap-data-pipeline[6.2.0,7.0.0-SNAPSHOT)</data.pipeline.parent>
-    <data.stream.parent>system:cdap-data-streams[6.2.0,7.0.0-SNAPSHOT)</data.stream.parent>
+    <data.pipeline.parent>system:cdap-data-pipeline[6.1.4,7.0.0-SNAPSHOT)</data.pipeline.parent>
+    <data.stream.parent>system:cdap-data-streams[6.1.4,7.0.0-SNAPSHOT)</data.stream.parent>
 
-    <cdap.version>6.2.0</cdap.version>
-    <hydrator.version>2.4.0</hydrator.version>
+    <cdap.version>6.1.4</cdap.version>
+    <hydrator.version>2.3.4</hydrator.version>
     <spark.version>2.3.4</spark.version>
     <logback.version>1.0.9</logback.version>
 
