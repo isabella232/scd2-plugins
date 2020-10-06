@@ -22,6 +22,14 @@
           "name": "endDateField"
         },
         {
+          "widget-type": "textbox",
+          "label": "End Date Offset",
+          "name": "endDateOffset",
+          "widget-attributes" : {
+            "default": "1us"
+          }
+        },
+        {
           "widget-type": "toggle",
           "name": "fillInNull",
           "label": "Fill In Null",
