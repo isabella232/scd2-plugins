@@ -32,14 +32,16 @@ are processed:
 
 After filling in null, the resulting records will be:
 
-| id | start_date | name | email         |
-| -- | ---------- |------|---------------|
-| 1  | 0          | John | bcd@abc.com   |
-| 1  | 10         | John | abc@abc.com   |
-| 1  | 100        | John | abc@abc.com   |
+| id | start_date | end_date           | name | email         |
+| -- | ---------- |--------------------|------|---------------|
+| 1  | 0          | 9                  | John | bcd@abc.com   |
+| 1  | 10         | 99                 | John | abc@abc.com   |
+| 1  | 100        | 253402214400000000 | John | abc@abc.com   |
 
 **Deduplicate:** Deduplicate consecutive records that have no changes. This can be used with the blacklist to exclude some fields from comparison.
-The blacklist typically includes the start time field. For example, suppose the following records are processed with start_date as blacklist:
+The blacklist typically includes the start time field. If Perserve Target is set to false, the record with the latest record will be picked.
+The end time of a record will be computed as the start time of the next non-deduplicated record minus the offset.
+For example, suppose the following records are processed with start_date as blacklist:
 
 | id | start_date | name | email         |
 | -- | ---------- |------|---------------|
@@ -49,12 +51,32 @@ The blacklist typically includes the start time field. For example, suppose the 
 
 After deduplicating, the resulting records will be:
 
-| id | start_date | name | email         |
-| -- | ---------- |------|---------------|
-| 1  | 0          | John | bcd@abc.com   |
-| 1  | 100        | Sam  | abc@abc.com   |
+| id | start_date | end_date           | name | email         |
+| -- | ---------- |--------------------|------|---------------|
+| 1  | 0          | 99                 | John | bcd@abc.com   |
+| 1  | 100        | 253402214400000000 | Sam  | abc@abc.com   |
 
 **Blacklist:** Blacklist for fields to ignore to compare when deduplicating the record.
+
+**Preserve Target** Preserve all the records from the scd2 target table when deduplicating.
+
+**Target Field** The name of the field that tells whether the record is coming from the scd2 target table. This field must be boolean.
+For example, suppose the target field is set to 'is_target' and the following records are processed:
+
+| id | start_date | name | isTarget      |
+| -- | ---------- |------|---------------|
+| 1  | 0          | John | false         |
+| 1  | 10         | John | true          |
+| 1  | 100        | John | false         |
+| 1  | 1000       | Sam  | false         |
+| 1  | 10000      | Sam  | false         |
+
+After deduplicating and computing the end time, the resulting records will be:
+
+| id | start_date | end_date           | name | isTarget      |
+| -- | ---------- |--------------------|------|---------------|
+| 1  | 10         | 9999               | John | true          |
+| 1  | 10000      | 253402214400000000 | Sam  | false         |
 
 **Number of Partitions:** Number of partitions to use when grouping the data. This number determines the level of
 parallelism for the job. A reasonable starting point is to divide your cluster memory by the pipeline executor memory and
