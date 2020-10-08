@@ -17,6 +17,10 @@ int, long, float, double, bytes or string type.
 **End Date Field:** The name of the end date field. The sorted results are iterated to compute the value of this field based
 on the start date.
 
+**End Date Offset:** The offset to compute the end date. The end date will be computed as the next start date minus this offset.
+The format is expected to be a number followed by an 'us', 'ms', 's', 'm', 'h', or 'd' specifying the time unit,
+with 'us' for microseconds, 'ms' for milliseconds, 's' for seconds, 'm' for minutes, 'h' for hours, and 'd' for days.
+
 **Fill In Null:** Fill in null fields from most recent previous records with same id. For example, suppose three records with same key
 are processed:
 
@@ -70,8 +74,8 @@ For example, Suppose the plugin is configured to use the 'id' field as the key, 
 | 2  | 15000000   | null       |
 
 
-The records are grouped by id, then sorted by start_date. The end dates are updated to be N - 1, where N is the start date timestamp
- of the next record.
+The records are grouped by id, then sorted by start_date. The end dates are updated to be N - offset(here assuming offset is 1),
+where N is the start date timestamp of the next record.
 
 | id | start_date | end_date            |
 | -- | ---------- | --------------------|

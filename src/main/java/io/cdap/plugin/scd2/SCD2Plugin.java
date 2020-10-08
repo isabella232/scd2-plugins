@@ -122,6 +122,7 @@ public class SCD2Plugin extends SparkCompute<StructuredRecord, StructuredRecord>
     private static final String END_DATE_FIELD = "endDateField";
     private static final String PLACEHOLDER = "placeHolderFields";
     private static final String BLACKLIST = "blacklist";
+    private static final String OFFSET = "endDateOffset";
 
     @Macro
     @Description("The name of the key field. The records will be grouped based on the key. " +
@@ -134,8 +135,16 @@ public class SCD2Plugin extends SparkCompute<StructuredRecord, StructuredRecord>
 
     @Macro
     @Description("The name of the end date field. The sorted results are iterated to compute the value of this " +
-                   "field basedon the start date.")
+                   "field based on the start date.")
     private String endDateField;
+
+    @Nullable
+    @Macro
+    @Description("The offset to compute the end date. The end date will be computed as the next start date minus " +
+                   "this offset. The format is expected to be a number followed by an 'us', 'ms', 's', 'm', 'h', " +
+                   "or 'd' specifying the time unit, with 'us' for microseconds, 'ms' for milliseconds, 's' for " +
+                   "seconds, 'm' for minutes, 'h' for hours, and 'd' for days. By default, the offset is 1us.")
+    private String endDateOffset;
 
     @Nullable
     @Macro
@@ -179,6 +188,10 @@ public class SCD2Plugin extends SparkCompute<StructuredRecord, StructuredRecord>
 
     public String getEndDateField() {
       return endDateField;
+    }
+
+    public long getEndDateOffset() {
+      return TimeParser.parseDuration(endDateOffset == null ? "1us" : endDateOffset);
     }
 
     public boolean deduplicate() {
@@ -260,6 +273,11 @@ public class SCD2Plugin extends SparkCompute<StructuredRecord, StructuredRecord>
               .withConfigElement(END_DATE_FIELD, endDateField);
           }
         }
+      }
+
+      if (!containsMacro(OFFSET) && getEndDateOffset() < 0) {
+        failureCollector.addFailure(String.format("The %s field has value %d, it must not be a negative number",
+                                                  OFFSET, getEndDateOffset()), null);
       }
     }
 

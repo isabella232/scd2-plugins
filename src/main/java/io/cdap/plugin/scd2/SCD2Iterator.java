@@ -127,7 +127,7 @@ public class SCD2Iterator extends AbstractIterator<StructuredRecord> {
       endDate = ACTIVE_TS;
     } else {
       Long date = next.get(conf.getStartDateField());
-      endDate = date == null ? ACTIVE_TS : date - 1L;
+      endDate = date == null ? ACTIVE_TS : date - conf.getEndDateOffset();
     }
     builder.set(conf.getEndDateField(), endDate);
     return builder.build();
