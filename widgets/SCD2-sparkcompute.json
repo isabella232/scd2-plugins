@@ -71,9 +71,68 @@
           }
         },
         {
+          "widget-type": "toggle",
+          "name": "preserveTarget",
+          "label": "Preserve Target",
+          "widget-attributes": {
+            "default": "false",
+            "on": {
+              "value": "true",
+              "label": "True"
+            },
+            "off": {
+              "value": "false",
+              "label": "False"
+            }
+          }
+        },
+        {
+          "widget-type": "textbox",
+          "label": "Target Field",
+          "name": "isTargetField"
+        },
+        {
           "widget-type": "textbox",
           "label": "Number of Partitions",
           "name": "numPartitions"
+        }
+      ]
+    }
+  ],
+  "filters": [
+    {
+      "name": "Deduplicate Enabled",
+      "condition": {
+        "property": "deduplicate",
+        "operator": "equal to",
+        "value": "true"
+      },
+      "show": [
+        {
+          "name": "blacklist",
+          "type": "property"
+        },
+        {
+          "name": "preserveTarget",
+          "type": "property"
+        },
+        {
+          "name": "isTargetField",
+          "type": "property"
+        }
+      ]
+    },
+    {
+      "name": "Preserve Enabled",
+      "condition": {
+        "property": "preserveTarget",
+        "operator": "equal to",
+        "value": "true"
+      },
+      "show": [
+        {
+          "name": "isTargetField",
+          "type": "property"
         }
       ]
     }

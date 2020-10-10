@@ -35,10 +35,8 @@ import io.cdap.cdap.etl.api.lineage.field.FieldOperation;
 import io.cdap.cdap.etl.api.lineage.field.FieldTransformOperation;
 import org.apache.spark.api.java.JavaRDD;
 
-import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.Comparator;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -123,6 +121,8 @@ public class SCD2Plugin extends SparkCompute<StructuredRecord, StructuredRecord>
     private static final String PLACEHOLDER = "placeHolderFields";
     private static final String BLACKLIST = "blacklist";
     private static final String OFFSET = "endDateOffset";
+    private static final String PRESERVE_TARGET = "preserveTarget";
+    private static final String IS_TARGET_FIELD = "isTargetField";
 
     @Macro
     @Description("The name of the key field. The records will be grouped based on the key. " +
@@ -153,13 +153,24 @@ public class SCD2Plugin extends SparkCompute<StructuredRecord, StructuredRecord>
 
     @Nullable
     @Macro
-    @Description("Fill in null fields from most recent previous record.")
-    private Boolean fillInNull;
+    @Description("Preserve all the records from the scd2 target table when deduplicating.")
+    private Boolean preserveTarget;
+
+    @Nullable
+    @Macro
+    @Description("The name of the field that tells whether the record is coming from the scd2 target table. " +
+                   "This field must be boolean.")
+    private String isTargetField;
 
     @Nullable
     @Macro
     @Description("Blacklist for fields to ignore to compare when deduplicating the record.")
     private String blacklist;
+
+    @Nullable
+    @Macro
+    @Description("Fill in null fields from most recent previous record.")
+    private Boolean fillInNull;
 
     @Nullable
     @Macro
@@ -169,13 +180,15 @@ public class SCD2Plugin extends SparkCompute<StructuredRecord, StructuredRecord>
 
     @VisibleForTesting
     public Conf(String key, String startDateField, String endDateField, boolean deduplicate,
-                boolean fillInNull, String blacklist) {
+                boolean fillInNull, String blacklist, boolean preserveTarget, String isTargetField) {
       this.key = key;
       this.startDateField = startDateField;
       this.endDateField = endDateField;
       this.deduplicate = deduplicate;
       this.fillInNull = fillInNull;
       this.blacklist = blacklist;
+      this.preserveTarget = preserveTarget;
+      this.isTargetField = isTargetField;
     }
 
     public String getKey() {
@@ -196,6 +209,14 @@ public class SCD2Plugin extends SparkCompute<StructuredRecord, StructuredRecord>
 
     public boolean deduplicate() {
       return deduplicate == null ? false : deduplicate;
+    }
+
+    public boolean preserveTarget() {
+      return preserveTarget == null ? false : preserveTarget;
+    }
+
+    public String getIsTargetField() {
+      return isTargetField;
     }
 
     public boolean fillInNull() {
@@ -278,6 +299,34 @@ public class SCD2Plugin extends SparkCompute<StructuredRecord, StructuredRecord>
       if (!containsMacro(OFFSET) && getEndDateOffset() < 0) {
         failureCollector.addFailure(String.format("The %s field has value %d, it must not be a negative number",
                                                   OFFSET, getEndDateOffset()), null);
+      }
+
+      if (!containsMacro(PRESERVE_TARGET) && !containsMacro(IS_TARGET_FIELD)) {
+        if (preserveTarget() && isTargetField == null) {
+          failureCollector.addFailure(
+            String.format("The %s field must be specified if preserve target is set to true.",
+                          IS_TARGET_FIELD), null);
+        }
+
+        if (isTargetField != null) {
+          Schema.Field field = actualSchema.getField(isTargetField);
+          if (field == null) {
+            failureCollector.addFailure(String.format("The %s field '%s' does not exist in input schema.",
+                                                      IS_TARGET_FIELD, isTargetField),
+                                        null).withConfigElement(IS_TARGET_FIELD, isTargetField);
+          } else {
+            Schema schema = field.getSchema();
+            if (schema.isNullable()) {
+              failureCollector.addFailure(String.format("The %s field '%s' is must not be nullable in " +
+                                                          "the input schema.", IS_TARGET_FIELD, isTargetField), null)
+                .withConfigElement(IS_TARGET_FIELD, isTargetField);
+            } else if (!Schema.Type.BOOLEAN.equals(schema.getType())) {
+              failureCollector.addFailure(String.format("The %s field '%s' is not boolean type in " +
+                                                          "the input schema.", IS_TARGET_FIELD, isTargetField), null)
+                .withConfigElement(IS_TARGET_FIELD, isTargetField);
+            }
+          }
+        }
       }
     }
 
