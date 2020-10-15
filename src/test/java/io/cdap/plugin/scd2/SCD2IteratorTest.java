@@ -183,7 +183,7 @@ public class SCD2IteratorTest {
                                            "isTarget"));
 
     result = new ArrayList<>();
-  //  iterator.forEachRemaining(result::add);
+    iterator.forEachRemaining(result::add);
 
     expected = new ArrayList<>();
     expected.add(StructuredRecord.builder(schema).set("id", 0)
@@ -196,7 +196,7 @@ public class SCD2IteratorTest {
     expected.add(StructuredRecord.builder(schema).set("id", 1)
                    .set("other", 1000).set("isTarget", false).set("startDate", 10L)
                    .set("endDate", 253402214400000000L).build());
-//    Assert.assertEquals(expected, result);
+    Assert.assertEquals(expected, result);
 
     input = new ArrayList<>();
     input.add(StructuredRecord.builder(schema).set("id", 0)
