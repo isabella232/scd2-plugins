@@ -40,6 +40,7 @@ public class SCD2Iterator extends AbstractIterator<StructuredRecord> {
   private final Table<Object, String, Object> valTable;
   private final SCD2Plugin.Conf conf;
   private final Set<String> blacklist;
+  private final long endDateOffset;
   private Schema outputSchema;
   private Tuple2<SCD2Key, StructuredRecord> cur;
   private Tuple2<SCD2Key, StructuredRecord> prev;
@@ -50,6 +51,7 @@ public class SCD2Iterator extends AbstractIterator<StructuredRecord> {
     this.conf = conf;
     this.blacklist = conf.getBlacklist();
     this.valTable = HashBasedTable.create();
+    this.endDateOffset = conf.getEndDateOffset();
   }
 
   @Override
@@ -107,8 +109,10 @@ public class SCD2Iterator extends AbstractIterator<StructuredRecord> {
         findResult = true;
       }
 
-      // if the current is different from next or if the next is from target table, we can stop deduplicating
-      if (isDiff(currentElement._2(), nextElement._2()) || isTarget(nextElement._2())) {
+      // if the current is different from next or if we already find the result and
+      // the next is from target table, we can stop deduplicating,
+      // since normally target table will be much larger than source table, compare for isTarget first
+      if ((findResult && isTarget(nextElement._2())) || isDiff(currentElement._2(), nextElement._2())) {
         break;
       }
 
@@ -172,7 +176,7 @@ public class SCD2Iterator extends AbstractIterator<StructuredRecord> {
       endDate = ACTIVE_TS;
     } else {
       Long date = next.get(conf.getStartDateField());
-      endDate = date == null ? ACTIVE_TS : date - conf.getEndDateOffset();
+      endDate = date == null ? ACTIVE_TS : date - endDateOffset;
     }
     builder.set(conf.getEndDateField(), endDate);
     return builder.build();
