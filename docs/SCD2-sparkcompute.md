@@ -9,19 +9,23 @@ Use Case
 This plugin is used to integrate the incoming data to the Slowly Changing Dimension Type 2 (SCD2) target tables, and to track the history of the record. 
 
 It supports the following patterns:
+
 **New record integration**
 If a new record is received from the input flow (with new natural key), it is added as active, with end date equal to a dummy value (9999-12-31).
+
 **Changed record integration**
 If a record is received with at least an update, the previous version is closed, with end date = start date of the new record minus
 one second) and the new record is added as active, with end date equal to the dummy value (9999-12-31).
+
 **False delta record cut off**
 This capability checks if at least one of the fields of the input record has changed from the previous version already present in
 the SCD2 table. If it does it is integrated to the table, otherwise it is discarded. This feature allows this plug-in to be agnostic about the input data loading
 (delta or full), since it manages only the changed records and avoids integrating records without variations.
+
 **Late arriving data**
 The plugin checks the date of completion of each incoming record in order to add them in the right time interval (start/end date) and
 to handle records with the date of completion older than the current active version. For example:
-Initial status of the SCD2:
+Initial status of the SCD2 dataset:
 
 | SubId | TariffId | Status | Start_Date | End_Date |
 |-------|----------|--------|------------|----------|
