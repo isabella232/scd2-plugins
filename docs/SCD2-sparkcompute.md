@@ -37,7 +37,7 @@ The new record it is inserted in the related time interval, changing the previou
 version.
 | SubId | TariffId | Status | Start_Date | End_Date |
 |-------|----------|--------|------------|----------|
-|1      |TP101     |A       |20190801    | 20190831 |
+|1      |TP101     |A       |20190801    | 20190814 |
 |1      |TP102     |A       |20190815    | 20190831 |
 |1      |TP101     |C       |20190901    | 99991231 |
 

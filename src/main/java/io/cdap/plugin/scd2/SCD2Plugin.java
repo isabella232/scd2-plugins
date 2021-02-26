@@ -124,17 +124,20 @@ public class SCD2Plugin extends SparkCompute<StructuredRecord, StructuredRecord>
     private static final String BLACKLIST = "blacklist";
 
     @Macro
-    @Description("The name of the key field. The records will be grouped based on the key. " +
-                   "This field must be comparable.")
+    @Description("The name of the key field. The key field is used to compare the new records with their previous " +
+                   "versions. Usually is set as the natural key of the table. This field must be one of boolean, " +
+                   "int, long, float, double, bytes or string type. The name of the key field. The records will " +
+                   "be grouped based on the key. ")
     private String key;
 
     @Macro
-    @Description("The name of the start date field. The grouped records are sorted based on this field.")
+    @Description("The name of the start date field, which is used as the lower limit of record validity. The grouped " +
+                   "records are sorted based on this field. This must be a timestamp.")
     private String startDateField;
 
     @Macro
-    @Description("The name of the end date field. The sorted results are iterated to compute the value of this " +
-                   "field basedon the start date.")
+    @Description("The name of the end date field, which is used as upper limit of record validity. The sorted " + 
+                   "results are iterated to compute the value of this field based on the start date.")
     private String endDateField;
 
     @Nullable
