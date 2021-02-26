@@ -1,0 +1,207 @@
+{
+    "artifact": {
+        "name": "cdap-data-pipeline",
+        "version": "6.3.0",
+        "scope": "SYSTEM"
+    },
+    "description": "Data Pipeline Application",
+    "name": "SCD2-sample",
+    "config": {
+        "resources": {
+            "memoryMB": 2048,
+            "virtualCores": 1
+        },
+        "driverResources": {
+            "memoryMB": 2048,
+            "virtualCores": 1
+        },
+        "connections": [
+            {
+                "from": "SCD2Target",
+                "to": "Wrangler"
+            },
+            {
+                "from": "Wrangler",
+                "to": "SCD2"
+            },
+            {
+                "from": "SCD2",
+                "to": "BigQueryTarget"
+            },
+            {
+                "from": "SCD2Source",
+                "to": "SCD2"
+            }
+        ],
+        "comments": [],
+        "postActions": [],
+        "properties": {
+            "system.spark.spark.cdap.pipeline.autocache.enable": "false"
+        },
+        "processTimingEnabled": true,
+        "stageLoggingEnabled": false,
+        "stages": [
+            {
+                "name": "SCD2Target",
+                "plugin": {
+                    "name": "BigQueryTable",
+                    "type": "batchsource",
+                    "label": "SCD2Target",
+                    "artifact": {
+                        "name": "google-cloud",
+                        "version": "0.16.0",
+                        "scope": "SYSTEM"
+                    },
+                    "properties": {
+                        "project": "auto-detect",
+                        "serviceFilePath": "auto-detect",
+                        "referenceName": "scd2target",
+                        "dataset": "${targetdataset}",
+                        "schema": "{\"type\":\"record\",\"name\":\"etlSchemaBody\",\"fields\":[{\"name\":\"user_id\",\"type\":\"long\"},{\"name\":\"name\",\"type\":\"string\"},{\"name\":\"gender\",\"type\":\"string\"},{\"name\":\"email\",\"type\":\"string\"},{\"name\":\"address\",\"type\":\"string\"},{\"name\":\"startts\",\"type\":{\"type\":\"long\",\"logicalType\":\"timestamp-micros\"}},{\"name\":\"endts\",\"type\":{\"type\":\"long\",\"logicalType\":\"timestamp-micros\"}}]}",
+                        "table": "${targettable}"
+                    }
+                },
+                "outputSchema": "{\"type\":\"record\",\"name\":\"etlSchemaBody\",\"fields\":[{\"name\":\"user_id\",\"type\":\"long\"},{\"name\":\"name\",\"type\":\"string\"},{\"name\":\"gender\",\"type\":\"string\"},{\"name\":\"email\",\"type\":\"string\"},{\"name\":\"address\",\"type\":\"string\"},{\"name\":\"startts\",\"type\":{\"type\":\"long\",\"logicalType\":\"timestamp-micros\"}},{\"name\":\"endts\",\"type\":{\"type\":\"long\",\"logicalType\":\"timestamp-micros\"}}]}",
+                "id": "SCD2Target"
+            },
+            {
+                "name": "Wrangler",
+                "plugin": {
+                    "name": "Wrangler",
+                    "type": "transform",
+                    "label": "Wrangler",
+                    "artifact": {
+                        "name": "wrangler-transform",
+                        "version": "4.3.0",
+                        "scope": "SYSTEM"
+                    },
+                    "properties": {
+                        "field": "*",
+                        "precondition": "false",
+                        "directives": "drop endts",
+                        "schema": "{\"type\":\"record\",\"name\":\"etlSchemaBody\",\"fields\":[{\"name\":\"user_id\",\"type\":\"long\"},{\"name\":\"name\",\"type\":\"string\"},{\"name\":\"gender\",\"type\":\"string\"},{\"name\":\"email\",\"type\":\"string\"},{\"name\":\"address\",\"type\":\"string\"},{\"name\":\"startts\",\"type\":{\"type\":\"long\",\"logicalType\":\"timestamp-micros\"}}]}"
+                    }
+                },
+                "outputSchema": [
+                    {
+                        "name": "etlSchemaBody",
+                        "schema": "{\"type\":\"record\",\"name\":\"etlSchemaBody\",\"fields\":[{\"name\":\"user_id\",\"type\":\"long\"},{\"name\":\"name\",\"type\":\"string\"},{\"name\":\"gender\",\"type\":\"string\"},{\"name\":\"email\",\"type\":\"string\"},{\"name\":\"address\",\"type\":\"string\"},{\"name\":\"startts\",\"type\":{\"type\":\"long\",\"logicalType\":\"timestamp-micros\"}}]}"
+                    }
+                ],
+                "inputSchema": [
+                    {
+                        "name": "BigQueryTarget",
+                        "schema": "{\"type\":\"record\",\"name\":\"etlSchemaBody\",\"fields\":[{\"name\":\"user_id\",\"type\":\"long\"},{\"name\":\"name\",\"type\":\"string\"},{\"name\":\"gender\",\"type\":\"string\"},{\"name\":\"email\",\"type\":\"string\"},{\"name\":\"address\",\"type\":\"string\"},{\"name\":\"startts\",\"type\":{\"type\":\"long\",\"logicalType\":\"timestamp-micros\"}},{\"name\":\"endts\",\"type\":{\"type\":\"long\",\"logicalType\":\"timestamp-micros\"}}]}"
+                    }
+                ],
+                "id": "Wrangler"
+            },
+            {
+                "name": "SCD2",
+                "plugin": {
+                    "name": "SCD2",
+                    "type": "sparkcompute",
+                    "label": "SCD2",
+                    "artifact": {
+                        "name": "scd2-plugins",
+                        "version": "1.0.3",
+                        "scope": "USER"
+                    },
+                    "properties": {
+                        "key": "user_id",
+                        "startDateField": "startts",
+                        "endDateField": "endts",
+                        "endDateOffset": "1us",
+                        "fillInNull": "false",
+                        "deduplicate": "false"
+                    }
+                },
+                "outputSchema": [
+                    {
+                        "name": "etlSchemaBody",
+                        "schema": "{\"type\":\"record\",\"name\":\"etlSchemaBody\",\"fields\":[{\"name\":\"user_id\",\"type\":\"long\"},{\"name\":\"name\",\"type\":\"string\"},{\"name\":\"gender\",\"type\":\"string\"},{\"name\":\"email\",\"type\":\"string\"},{\"name\":\"address\",\"type\":\"string\"},{\"name\":\"startts\",\"type\":{\"type\":\"long\",\"logicalType\":\"timestamp-micros\"}},{\"name\":\"endts\",\"type\":{\"type\":\"long\",\"logicalType\":\"timestamp-micros\"}}]}"
+                    }
+                ],
+                "inputSchema": [
+                    {
+                        "name": "Wrangler",
+                        "schema": "{\"type\":\"record\",\"name\":\"etlSchemaBody\",\"fields\":[{\"name\":\"user_id\",\"type\":\"long\"},{\"name\":\"name\",\"type\":\"string\"},{\"name\":\"gender\",\"type\":\"string\"},{\"name\":\"email\",\"type\":\"string\"},{\"name\":\"address\",\"type\":\"string\"},{\"name\":\"startts\",\"type\":{\"type\":\"long\",\"logicalType\":\"timestamp-micros\"}}]}"
+                    },
+                    {
+                        "name": "SCD2Source",
+                        "schema": "{\"type\":\"record\",\"name\":\"etlSchemaBody\",\"fields\":[{\"name\":\"user_id\",\"type\":\"long\"},{\"name\":\"name\",\"type\":\"string\"},{\"name\":\"gender\",\"type\":\"string\"},{\"name\":\"email\",\"type\":\"string\"},{\"name\":\"address\",\"type\":\"string\"},{\"name\":\"startts\",\"type\":{\"type\":\"long\",\"logicalType\":\"timestamp-micros\"}}]}"
+                    }
+                ],
+                "id": "SCD2"
+            },
+            {
+                "name": "BigQueryTarget",
+                "plugin": {
+                    "name": "BigQueryTable",
+                    "type": "batchsink",
+                    "label": "BigQueryTarget",
+                    "artifact": {
+                        "name": "google-cloud",
+                        "version": "0.16.0",
+                        "scope": "SYSTEM"
+                    },
+                    "properties": {
+                        "serviceFilePath": "auto-detect",
+                        "operation": "insert",
+                        "truncateTable": "true",
+                        "allowSchemaRelaxation": "false",
+                        "location": "US",
+                        "createPartitionedTable": "false",
+                        "partitionFilterRequired": "false",
+                        "schema": "{\"type\":\"record\",\"name\":\"etlSchemaBody\",\"fields\":[{\"name\":\"user_id\",\"type\":\"long\"},{\"name\":\"name\",\"type\":\"string\"},{\"name\":\"gender\",\"type\":\"string\"},{\"name\":\"email\",\"type\":\"string\"},{\"name\":\"address\",\"type\":\"string\"},{\"name\":\"startts\",\"type\":{\"type\":\"long\",\"logicalType\":\"timestamp-micros\"}},{\"name\":\"endts\",\"type\":{\"type\":\"long\",\"logicalType\":\"timestamp-micros\"}}]}",
+                        "dataset": "${targetds}",
+                        "table": "${targettb}",
+                        "referenceName": "target",
+                        "project": "auto-detect"
+                    }
+                },
+                "outputSchema": "{\"type\":\"record\",\"name\":\"etlSchemaBody\",\"fields\":[{\"name\":\"user_id\",\"type\":\"long\"},{\"name\":\"name\",\"type\":\"string\"},{\"name\":\"gender\",\"type\":\"string\"},{\"name\":\"email\",\"type\":\"string\"},{\"name\":\"address\",\"type\":\"string\"},{\"name\":\"startts\",\"type\":{\"type\":\"long\",\"logicalType\":\"timestamp-micros\"}},{\"name\":\"endts\",\"type\":{\"type\":\"long\",\"logicalType\":\"timestamp-micros\"}}]}",
+                "inputSchema": [
+                    {
+                        "name": "SCD2",
+                        "schema": "{\"type\":\"record\",\"name\":\"etlSchemaBody\",\"fields\":[{\"name\":\"user_id\",\"type\":\"long\"},{\"name\":\"name\",\"type\":\"string\"},{\"name\":\"gender\",\"type\":\"string\"},{\"name\":\"email\",\"type\":\"string\"},{\"name\":\"address\",\"type\":\"string\"},{\"name\":\"startts\",\"type\":{\"type\":\"long\",\"logicalType\":\"timestamp-micros\"}},{\"name\":\"endts\",\"type\":{\"type\":\"long\",\"logicalType\":\"timestamp-micros\"}}]}"
+                    }
+                ],
+                "id": "BigQueryTarget"
+            },
+            {
+                "name": "SCD2Source",
+                "plugin": {
+                    "name": "BigQueryTable",
+                    "type": "batchsource",
+                    "label": "SCD2Source",
+                    "artifact": {
+                        "name": "google-cloud",
+                        "version": "0.16.0",
+                        "scope": "SYSTEM"
+                    },
+                    "properties": {
+                        "project": "auto-detect",
+                        "serviceFilePath": "auto-detect",
+                        "referenceName": "scd2source",
+                        "dataset": "${sourcedataset}",
+                        "table": "${sourcetable}",
+                        "schema": "{\"type\":\"record\",\"name\":\"etlSchemaBody\",\"fields\":[{\"name\":\"user_id\",\"type\":\"long\"},{\"name\":\"name\",\"type\":\"string\"},{\"name\":\"gender\",\"type\":\"string\"},{\"name\":\"email\",\"type\":\"string\"},{\"name\":\"address\",\"type\":\"string\"},{\"name\":\"startts\",\"type\":{\"type\":\"long\",\"logicalType\":\"timestamp-micros\"}}]}"
+                    }
+                },
+                "outputSchema": [
+                    {
+                        "name": "etlSchemaBody",
+                        "schema": "{\"type\":\"record\",\"name\":\"etlSchemaBody\",\"fields\":[{\"name\":\"user_id\",\"type\":\"long\"},{\"name\":\"name\",\"type\":\"string\"},{\"name\":\"gender\",\"type\":\"string\"},{\"name\":\"email\",\"type\":\"string\"},{\"name\":\"address\",\"type\":\"string\"},{\"name\":\"startts\",\"type\":{\"type\":\"long\",\"logicalType\":\"timestamp-micros\"}}]}"
+                    }
+                ],
+                "id": "SCD2Source"
+            }
+        ],
+        "schedule": "0 * * * *",
+        "engine": "spark",
+        "numOfRecordsPreview": 100,
+        "description": "Data Pipeline Application",
+        "maxConcurrentRuns": 1
+    }
+}
